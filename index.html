@@ -1,0 +1,2745 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Inventario</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+        }
+
+        body {
+            background-color: #091540;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), #1a2530);
+            color: white;
+            padding: 25px 0;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo i {
+            font-size: 3.5rem;
+            color: var(--secondary-color);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #bdc3c7;
+            font-size: 1.1rem;
+            margin-top: 5px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            min-width: 100px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--secondary-color);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #bdc3c7;
+        }
+
+        .alerts-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background-color: #232F72;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 18px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #36ADA3;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--secondary-color);
+            outline: none;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+
+        .btn-category {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            background-color: #f0f7ff;
+            color: var(--secondary-color);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-category:hover {
+            background-color: #e1f0ff;
+        }
+
+        .btn-category.active {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: #f8f9fa;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 700;
+            color: var(--primary-color);
+            border-bottom: 2px solid #eee;
+        }
+
+        td {
+            padding: 15px;
+            color: #ffffff;
+            border-bottom: 1px solid #eee;
+        }
+
+        tbody tr:hover {
+            background-color: #2b4eb1;
+        }
+
+        .expiring-soon {
+            background-color: #fff8e6 !important;
+        }
+
+        .expired {
+            background-color: #ffe6e6 !important;
+        }
+
+        .product-name {
+            font-weight: 600;
+        }
+
+        .quantity-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quantity-badge {
+            background-color: #e8f4fc;
+            color: var(--secondary-color);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .supplier-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background-color: #f0f0f0;
+            color: #555;
+            margin-top: 5px;
+            margin-left: 5px;
+        }
+
+        .expiration-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .expiration-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .expiration-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .expiration-ok {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .edit-btn {
+            background-color: #f0f7ff;
+            color: var(--secondary-color);
+        }
+
+        .edit-btn:hover {
+            background-color: #e1f0ff;
+        }
+
+        .delete-btn {
+            background-color: #fef0f0;
+            color: var(--accent-color);
+        }
+
+        .delete-btn:hover {
+            background-color: #fde0e0;
+        }
+
+        .subtract-btn {
+            background-color: #fff4e6;
+            color: var(--warning-color);
+        }
+
+        .subtract-btn:hover {
+            background-color: #ffe8cc;
+        }
+
+        .add-btn {
+            background-color: #e6f7f0;
+            color: var(--success-color);
+        }
+
+        .add-btn:hover {
+            background-color: #d4f0e6;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #7f8c8d;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #bdc3c7;
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        .alert.show {
+            opacity: 1;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-container input, .search-container select {
+            flex-grow: 1;
+        }
+
+        .categories-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+        }
+
+        .suppliers-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+        }
+
+        .color-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+
+        .color-picker {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .stats-by-category {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .category-stat {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        .category-stat-name {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+
+        .category-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #7f8c8d;
+            cursor: pointer;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            font-weight: 600;
+            color: #7f8c8d;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .tab:hover {
+            color: var(--secondary-color);
+        }
+
+        .tab.active {
+            color: var(--secondary-color);
+            border-bottom: 3px solid var(--secondary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .provider-list, .category-list {
+            margin-top: 20px;
+        }
+
+        .provider-item, .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+            margin-bottom: 10px;
+        }
+
+        .provider-name, .category-name {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .provider-products-count, .category-products-count {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .subtract-form, .add-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .subtract-form input, .add-form input {
+            flex-grow: 1;
+        }
+
+        .provider-select-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .add-provider-btn, .add-category-btn {
+            padding: 10px;
+            background-color: #f0f7ff;
+            color: var(--secondary-color);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .export-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .export-preview {
+            margin-top: 20px;
+            border: 1px solid #eee;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .export-preview table {
+            margin: 0;
+        }
+
+        .export-preview th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .export-preview td, .export-preview th {
+            padding: 10px;
+            border: 1px solid #eee;
+        }
+
+        .expiring-products {
+            margin-top: 30px;
+        }
+
+        .expiring-product {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background-color: #fff8e6;
+            border-left: 4px solid var(--warning-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 10px;
+        }
+
+        .expiring-product.expired {
+            background-color: #ffe6e6;
+            border-left-color: var(--danger-color);
+        }
+
+        .expiring-product-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .expiring-product-details {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .expiring-product-date {
+            font-weight: 600;
+            color: var(--warning-color);
+        }
+
+        .expiring-product-date.expired {
+            color: var(--danger-color);
+        }
+
+        .date-input-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .clear-date-btn {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            padding: 10px 15px;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+
+        .clear-date-btn:hover {
+            background-color: #e9ecef;
+        }
+
+        
+
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fa-brands fa-d-and-d" style="color: rgb(255, 212, 59);"></i>
+                    <div>
+                        <h1 style="color: rgb(255, 212, 59);">Control de Inventario Abarrotes Z</h1>
+                        <p class="subtitle"></p>
+                    </div>
+                </div>
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="stat-value" id="total-products">0</div>
+                        <div class="stat-label">Productos</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="total-items">0</div>
+                        <div class="stat-label">Unidades</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="total-categories">0</div>
+                        <div class="stat-label">Categorías</div>
+                    </div>
+                    <div class="stat-box" style="position: relative;">
+                        <div class="stat-value" id="total-suppliers">0</div>
+                        <div class="stat-label">Proveedores</div>
+                    </div>
+                    <div class="stat-box" style="position: relative;">
+                        <div class="stat-value" id="expiring-count">0</div>
+                        <div class="stat-label">Por Vencer</div>
+                        <div class="alerts-badge" id="expiring-badge" style="display: none;">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="alert-container"></div>
+        
+        <!-- Alertas de productos por vencer -->
+        <div id="expiring-alerts" style="display: none;"></div>
+        
+        <div class="tabs">
+            <button class="tab active" data-tab="inventory">Inventario</button>
+            <button class="tab" data-tab="categories">Categorías</button>
+            <button class="tab" data-tab="providers">Proveedores</button>
+            <button class="tab" data-tab="export">Exportar a Excel</button>
+        </div>
+        
+        <div class="tab-content active" id="inventory-tab">
+            <div class="main-content">
+                <div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title"><i class="fas fa-plus-circle"></i> Agregar Nuevo Producto</h2>
+                        </div>
+                        <div class="card-body">
+                            <form id="product-form">
+                                <div class="form-group">
+                                    <label for="product-name"><i class="fas fa-box"></i> Nombre del Producto</label>
+                                    <input type="text" id="product-name" placeholder="Ej: CocaCola" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="product-category"><i class="fas fa-tag"></i> Categoría</label>
+                                    <select id="product-category" required>
+                                        <option value="">Selecciona una categoría</option>
+                                        <!-- Categorías se cargarán dinámicamente -->
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <div class="provider-select-container">
+                                        <label for="product-supplier"><i class="fas fa-truck"></i> Proveedor</label>
+                                        <button type="button" class="add-provider-btn" id="add-provider-btn" title="Agregar nuevo proveedor">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <select id="product-supplier" required>
+                                        <option value="">Selecciona un proveedor</option>
+                                        <!-- Proveedores se cargarán dinámicamente -->
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="product-quantity"><i class="fas fa-layer-group"></i> Cantidad Recibida</label>
+                                    <input type="number" id="product-quantity" min="1" value="1" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="product-expiration"><i class="fas fa-calendar-alt"></i> Fecha de Vencimiento (Opcional)</label>
+                                    <div class="date-input-container">
+                                        <input type="date" id="product-expiration">
+                                        <button type="button" class="clear-date-btn" id="clear-expiration">
+                                            <i class="fas fa-times"></i> Limpiar
+                                        </button>
+                                    </div>
+                                    <small style="color: #7f8c8d; display: block; margin-top: 5px;">Deja vacío si el producto no tiene fecha de vencimiento</small>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Guardar Producto
+                                </button>
+                            </form>
+                            
+                            <div class="expiring-products" id="expiring-products-list">
+                                <!-- Productos por vencer se cargarán aquí -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title"><i class="fas fa-chart-pie"></i> Resumen por Categoría</h2>
+                        </div>
+                        <div class="card-body">
+                            <div id="category-stats">
+                                <!-- Las estadísticas por categoría se generarán con JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title"><i class="fas fa-list-ul"></i> Inventario Actual</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="search-container">
+                                <input type="text" id="search-product" placeholder="Buscar producto por nombre...">
+                                <select id="filter-category">
+                                    <option value="">Todas las categorías</option>
+                                    <!-- Categorías se cargarán dinámicamente -->
+                                </select>
+                                <select id="filter-supplier">
+                                    <option value="">Todos los proveedores</option>
+                                    <!-- Proveedores se cargarán dinámicamente -->
+                                </select>
+                            </div>
+                            
+                            <div class="search-container">
+                                <select id="filter-expiration">
+                                    <option value="">Todos los productos</option>
+                                    <option value="expiring">Por vencer (≤ 5 días)</option>
+                                    <option value="expired">Vencidos</option>
+                                    <option value="no-expiration">Sin vencimiento</option>
+                                </select>
+                                <button id="clear-filters" class="btn btn-small" style="background-color: #f0f0f0;">
+                                    <i class="fas fa-filter"></i> Limpiar Filtros
+                                </button>
+                            </div>
+                            
+                            <div class="categories-filter" id="categories-buttons">
+                                <!-- Los botones de categorías se generarán con JavaScript -->
+                            </div>
+                            
+                            <div class="suppliers-filter" id="suppliers-buttons">
+                                <!-- Los botones de proveedores se generarán con JavaScript -->
+                            </div>
+                            
+                            <div class="table-container">
+                                <table id="inventory-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Categoría</th>
+                                            <th>Proveedor</th>
+                                            <th>Cantidad</th>
+                                            <th>Vencimiento</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="inventory-body">
+                                        <!-- Los productos se cargarán aquí con JavaScript -->
+                                        <tr id="empty-row">
+                                            <td colspan="6">
+                                                <div class="empty-state">
+                                                    <i class="fas fa-inbox"></i>
+                                                    <p>No hay productos en el inventario. Agrega uno nuevo.</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div style="margin-top: 20px; display: flex; justify-content: space-between;">
+                                <button id="clear-all" class="btn btn-danger">
+                                    <i class="fas fa-trash-alt"></i> Vaciar Inventario
+                                </button>
+                                <button id="export-data" class="btn btn-success" onclick="switchTab('export')">
+                                    <i class="fas fa-file-export"></i> Exportar a Excel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="categories-tab">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-tags"></i> Gestión de Categorías</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="new-category-name"><i class="fas fa-tag"></i> Nombre de la Nueva Categoría</label>
+                        <input type="text" id="new-category-name" placeholder="Ej: Sabritas, CocaCola, etc.">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="new-category-color"><i class="fas fa-palette"></i> Color de la Categoría</label>
+                        <div class="color-picker" id="color-picker">
+                            <!-- Colores predefinidos -->
+                            <span style="background-color: #FF6B6B;" class="color-dot" data-color="#FF6B6B" title="Rojo"></span>
+                            <span style="background-color: #4ECDC4;" class="color-dot" data-color="#4ECDC4" title="Turquesa"></span>
+                            <span style="background-color: #FFD166;" class="color-dot" data-color="#FFD166" title="Amarillo"></span>
+                            <span style="background-color: #118AB2;" class="color-dot" data-color="#118AB2" title="Azul"></span>
+                            <span style="background-color: #EF476F;" class="color-dot" data-color="#EF476F" title="Rosa"></span>
+                            <span style="background-color: #06D6A0;" class="color-dot" data-color="#06D6A0" title="Verde"></span>
+                            <span style="background-color: #9D4EDD;" class="color-dot" data-color="#9D4EDD" title="Púrpura"></span>
+                            <span style="background-color: #FF9E6D;" class="color-dot" data-color="#FF9E6D" title="Naranja"></span>
+                            <span style="background-color: #7F8C8D;" class="color-dot" data-color="#7F8C8D" title="Gris"></span>
+                            <span style="background-color: #2C3E50;" class="color-dot" data-color="#2C3E50" title="Azul Oscuro"></span>
+                        </div>
+                        <small style="color: #7f8c8d; display: block; margin-top: 5px;">Selecciona un color para la categoría</small>
+                    </div>
+                    
+                    <button id="add-category" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Agregar Categoría
+                    </button>
+                    
+                    <div class="category-list" id="category-list">
+                        <!-- Lista de categorías se cargará dinámicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="providers-tab">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-truck"></i> Gestión de Proveedores</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="new-provider-name"><i class="fas fa-user-tag"></i> Nombre del Nuevo Proveedor</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="new-provider-name" placeholder="Ej: Abarroteras">
+                            <button id="add-provider" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Agregar Proveedor
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="provider-list" id="provider-list">
+                        <!-- Lista de proveedores se cargará dinámicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="export-tab">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-file-excel"></i> Exportar a Excel</h2>
+                </div>
+                <div class="card-body">
+                    <p style="color: #36ADA3;">Exporta tu inventario en formato Excel (.xlsx) con el siguiente formato:</p>
+                    
+                    <div class="export-preview">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 30%;">Proveedor</th>
+                                    <th style="width: 40%;">Producto</th>
+                                    <th style="width: 15%;">Cantidad</th>
+                                    <th style="width: 15%;">Vencimiento</th>
+                                </tr>
+                            </thead>
+                            <tbody id="export-preview-body">
+                                <!-- Vista previa de exportación -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="export-options">
+                        <button id="export-current-view" class="btn btn-primary">
+                            <i class="fas fa-download"></i> Exportar Vista Actual
+                        </button>
+                        <button id="export-all" class="btn btn-success">
+                            <i class="fas fa-download"></i> Exportar Todo el Inventario
+                        </button>
+                        <button id="export-expiring" class="btn btn-warning">
+                            <i class="fas fa-exclamation-triangle"></i> Exportar Por Vencer
+                        </button>
+                    </div>
+                    
+                    <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: var(--border-radius);">
+                        <h3 style="margin-bottom: 15px; color: var(--primary-color);"><i class="fas fa-info-circle"></i> Instrucciones</h3>
+                        <ul style="padding-left: 20px;">
+                            <li><strong>Exportar Vista Actual:</strong> Exporta los productos filtrados según tu búsqueda actual.</li>
+                            <li><strong>Exportar Todo el Inventario:</strong> Exporta todos los productos sin filtros.</li>
+                            <li><strong>Exportar Por Vencer:</strong> Exporta productos que vencen en 5 días o menos.</li>
+                            <li>El archivo se descargará en formato Excel (.xlsx) con el nombre "INVENTARIO_[FECHA].xlsx"</li>
+                            <li>El formato incluye fecha de vencimiento si está disponible.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Sistema de Control de Inventario Dixe &copy; 2026 | Datos guardados localmente</p>
+        </footer>
+    </div>
+
+    <!-- Modal para descontar productos -->
+    <div class="modal" id="subtract-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Descontar Producto</h3>
+                <button class="close-modal" id="close-subtract-modal">&times;</button>
+            </div>
+            <div id="subtract-modal-body">
+                <!-- Contenido del modal se cargará dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para añadir productos -->
+    <div class="modal" id="add-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Añadir Productos</h3>
+                <button class="close-modal" id="close-add-modal">&times;</button>
+            </div>
+            <div id="add-modal-body">
+                <!-- Contenido del modal se cargará dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para agregar proveedor -->
+    <div class="modal" id="provider-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Agregar Nuevo Proveedor</h3>
+                <button class="close-modal" id="close-provider-modal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="modal-provider-name">Nombre del Proveedor</label>
+                <input type="text" id="modal-provider-name" placeholder="Ej: Abarroteras">
+            </div>
+            <div class="form-group">
+                <label for="modal-provider-contact">Contacto (opcional)</label>
+                <input type="text" id="modal-provider-contact" placeholder="Ej: contacto@proveedor.com">
+            </div>
+            <div class="form-group">
+                <label for="modal-provider-phone">Teléfono (opcional)</label>
+                <input type="text" id="modal-provider-phone" placeholder="Ej: +52 66 1234 5678">
+            </div>
+            <button id="save-provider" class="btn btn-primary">Guardar Proveedor</button>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let inventory = [];
+        let suppliers = [];
+        let categories = [];
+        const INVENTORY_STORAGE_KEY = 'inventory_data_complete';
+        const SUPPLIERS_STORAGE_KEY = 'suppliers_data_complete';
+        const CATEGORIES_STORAGE_KEY = 'categories_data_complete';
+
+        // Colores predefinidos para categorías
+        const DEFAULT_COLORS = [
+            '#FF6B6B', '#4ECDC4', '#FFD166', '#118AB2', '#EF476F',
+            '#06D6A0', '#9D4EDD', '#FF9E6D', '#7F8C8D', '#2C3E50'
+        ];
+
+        // Categorías predeterminadas
+        const DEFAULT_CATEGORIES = [
+            { id: 1, name: 'Pan', color: '#FFD166' },
+            { id: 2, name: 'Dulces', color: '#118AB2' },
+            { id: 3, name: 'Refresco', color: '#06D6A0' },
+            { id: 4, name: 'Papas', color: '#FF9E6D' },
+            { id: 5, name: 'Especias', color: '#9D4EDD' },
+            { id: 6, name: 'Detergentes', color: '#4ECDC4' },
+            { id: 7, name: 'Enlatados', color: '#7F8C8D' },
+            { id: 8, name: 'Otros', color: '#2C3E50' },
+        ];
+
+        // Elementos del DOM
+        const productForm = document.getElementById('product-form');
+        const productNameInput = document.getElementById('product-name');
+        const productCategoryInput = document.getElementById('product-category');
+        const productSupplierInput = document.getElementById('product-supplier');
+        const productQuantityInput = document.getElementById('product-quantity');
+        const productExpirationInput = document.getElementById('product-expiration');
+        const clearExpirationBtn = document.getElementById('clear-expiration');
+        const inventoryBody = document.getElementById('inventory-body');
+        const emptyRow = document.getElementById('empty-row');
+        const totalProductsElement = document.getElementById('total-products');
+        const totalItemsElement = document.getElementById('total-items');
+        const totalCategoriesElement = document.getElementById('total-categories');
+        const totalSuppliersElement = document.getElementById('total-suppliers');
+        const expiringCountElement = document.getElementById('expiring-count');
+        const expiringBadge = document.getElementById('expiring-badge');
+        const searchInput = document.getElementById('search-product');
+        const filterCategoryInput = document.getElementById('filter-category');
+        const filterSupplierInput = document.getElementById('filter-supplier');
+        const filterExpirationInput = document.getElementById('filter-expiration');
+        const clearFiltersBtn = document.getElementById('clear-filters');
+        const categoriesButtonsContainer = document.getElementById('categories-buttons');
+        const suppliersButtonsContainer = document.getElementById('suppliers-buttons');
+        const clearAllButton = document.getElementById('clear-all');
+        const alertContainer = document.getElementById('alert-container');
+        const expiringAlertsContainer = document.getElementById('expiring-alerts');
+        const expiringProductsList = document.getElementById('expiring-products-list');
+        const categoryStatsContainer = document.getElementById('category-stats');
+        const providerListContainer = document.getElementById('provider-list');
+        const categoryListContainer = document.getElementById('category-list');
+        const addProviderButton = document.getElementById('add-provider');
+        const newProviderNameInput = document.getElementById('new-provider-name');
+        const addProviderModalButton = document.getElementById('add-provider-btn');
+        const providerModal = document.getElementById('provider-modal');
+        const closeProviderModal = document.getElementById('close-provider-modal');
+        const saveProviderButton = document.getElementById('save-provider');
+        const modalProviderName = document.getElementById('modal-provider-name');
+        const modalProviderContact = document.getElementById('modal-provider-contact');
+        const modalProviderPhone = document.getElementById('modal-provider-phone');
+        const subtractModal = document.getElementById('subtract-modal');
+        const addModal = document.getElementById('add-modal');
+        const closeSubtractModal = document.getElementById('close-subtract-modal');
+        const closeAddModal = document.getElementById('close-add-modal');
+        const subtractModalBody = document.getElementById('subtract-modal-body');
+        const addModalBody = document.getElementById('add-modal-body');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const exportPreviewBody = document.getElementById('export-preview-body');
+        const exportCurrentViewButton = document.getElementById('export-current-view');
+        const exportAllButton = document.getElementById('export-all');
+        const exportExpiringButton = document.getElementById('export-expiring');
+        const newCategoryNameInput = document.getElementById('new-category-name');
+        const colorPicker = document.getElementById('color-picker');
+        const addCategoryButton = document.getElementById('add-category');
+
+        // Variables de estado
+        let selectedProductForSubtraction = null;
+        let selectedProductForAddition = null;
+        let selectedCategoryColor = DEFAULT_COLORS[0];
+        let expirationCheckInterval = null;
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            loadInventory();
+            loadSuppliers();
+            loadCategories();
+            setupColorPicker();
+            renderInventory();
+            updateCategoryButtons();
+            updateSupplierButtons();
+            updateCategoryStats();
+            populateDropdowns();
+            renderProviderList();
+            renderCategoryList();
+            updateExportPreview();
+            setupEventListeners();
+            checkExpiringProducts();
+            startExpirationChecker();
+            switchTab('inventory');
+        });
+
+        // Cargar inventario desde localStorage
+        function loadInventory() {
+            const savedInventory = localStorage.getItem(INVENTORY_STORAGE_KEY);
+            if (savedInventory) {
+                inventory = JSON.parse(savedInventory);
+            }
+        }
+
+        // Guardar inventario en localStorage
+        function saveInventory() {
+            localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
+        }
+
+        // Cargar proveedores desde localStorage
+        function loadSuppliers() {
+            const savedSuppliers = localStorage.getItem(SUPPLIERS_STORAGE_KEY);
+            if (savedSuppliers) {
+                suppliers = JSON.parse(savedSuppliers);
+            } else {
+                // Proveedores predeterminados
+                suppliers = [
+                    { id: 1, name: 'Abarroteras', contact: '', phone: '', productCount: 0 },
+                    { id: 2, name: 'Barcel', contact: '', phone: '', productCount: 0 },
+                    { id: 3, name: 'Sabritas', contact: '', phone: '', productCount: 0 },
+                    { id: 4, name: 'Marinela', contact: '', phone: '', productCount: 0 },
+                    { id: 5, name: 'CocaCola', contact: '', phone: '', productCount: 0 },
+                    { id: 6, name: 'Gamesa', contact: '', phone: '', productCount: 0 },
+                    { id: 7, name: 'Bimbo', contact: '', phone: '', productCount: 0 },
+                    { id: 8, name: 'Pepsi', contact: '', phone: '', productCount: 0 },
+                    { id: 9, name: 'Externo', contact: '', phone: '', productCount: 0 },
+                ];
+                saveSuppliers();
+            }
+        }
+
+        // Guardar proveedores en localStorage
+        function saveSuppliers() {
+            localStorage.setItem(SUPPLIERS_STORAGE_KEY, JSON.stringify(suppliers));
+        }
+
+        // Cargar categorías desde localStorage
+        function loadCategories() {
+            const savedCategories = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+            if (savedCategories) {
+                categories = JSON.parse(savedCategories);
+            } else {
+                // Categorías predeterminadas
+                categories = [...DEFAULT_CATEGORIES];
+                saveCategories();
+            }
+        }
+
+        // Guardar categorías en localStorage
+        function saveCategories() {
+            localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
+        }
+
+        // Configurar selector de colores
+        function setupColorPicker() {
+            colorPicker.innerHTML = '';
+            
+            DEFAULT_COLORS.forEach(color => {
+                const colorDot = document.createElement('span');
+                colorDot.className = 'color-dot';
+                colorDot.style.backgroundColor = color;
+                colorDot.setAttribute('data-color', color);
+                colorDot.setAttribute('title', color);
+                
+                if (color === selectedCategoryColor) {
+                    colorDot.style.border = '3px solid #2c3e50';
+                }
+                
+                colorDot.addEventListener('click', function() {
+                    selectedCategoryColor = this.getAttribute('data-color');
+                    
+                    // Actualizar visualización
+                    document.querySelectorAll('.color-dot').forEach(dot => {
+                        dot.style.border = '2px solid white';
+                    });
+                    this.style.border = '3px solid #2c3e50';
+                });
+                
+                colorPicker.appendChild(colorDot);
+            });
+        }
+
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Enviar formulario de producto
+            productForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                addProduct();
+            });
+
+            // Limpiar fecha de vencimiento
+            clearExpirationBtn.addEventListener('click', function() {
+                productExpirationInput.value = '';
+            });
+
+            // Buscar productos
+            searchInput.addEventListener('input', function() {
+                renderInventory();
+                updateExportPreview();
+            });
+
+            // Filtrar por categoría
+            filterCategoryInput.addEventListener('change', function() {
+                renderInventory();
+                updateExportPreview();
+            });
+
+            // Filtrar por proveedor
+            filterSupplierInput.addEventListener('change', function() {
+                renderInventory();
+                updateExportPreview();
+            });
+
+            // Filtrar por vencimiento
+            filterExpirationInput.addEventListener('change', function() {
+                renderInventory();
+                updateExportPreview();
+            });
+
+            // Limpiar filtros
+            clearFiltersBtn.addEventListener('click', function() {
+                searchInput.value = '';
+                filterCategoryInput.value = '';
+                filterSupplierInput.value = '';
+                filterExpirationInput.value = '';
+                renderInventory();
+                updateExportPreview();
+                updateCategoryButtons();
+                updateSupplierButtons();
+            });
+
+            // Vaciar inventario
+            clearAllButton.addEventListener('click', function() {
+                if (inventory.length > 0 && confirm('¿Estás seguro de que quieres vaciar todo el inventario? Esta acción no se puede deshacer.')) {
+                    inventory = [];
+                    saveInventory();
+                    renderInventory();
+                    updateCategoryButtons();
+                    updateSupplierButtons();
+                    updateCategoryStats();
+                    updateExportPreview();
+                    checkExpiringProducts();
+                    showAlert('Inventario vaciado correctamente', 'success');
+                }
+            });
+
+            // Agregar proveedor desde el panel de proveedores
+            addProviderButton.addEventListener('click', function() {
+                addNewProvider();
+            });
+
+            // Agregar categoría
+            addCategoryButton.addEventListener('click', function() {
+                addNewCategory();
+            });
+
+            // Agregar proveedor desde el modal
+            addProviderModalButton.addEventListener('click', function() {
+                openProviderModal();
+            });
+
+            // Guardar proveedor desde el modal
+            saveProviderButton.addEventListener('click', function() {
+                saveProviderFromModal();
+            });
+
+            // Cerrar modal de proveedor
+            closeProviderModal.addEventListener('click', function() {
+                closeProviderModalFunc();
+            });
+
+            // Cerrar modal de descuento
+            closeSubtractModal.addEventListener('click', function() {
+                closeSubtractModalFunc();
+            });
+
+            // Cerrar modal de añadir
+            closeAddModal.addEventListener('click', function() {
+                closeAddModalFunc();
+            });
+
+            // Cerrar modales al hacer clic fuera
+            window.addEventListener('click', function(event) {
+                if (event.target === providerModal) {
+                    closeProviderModalFunc();
+                }
+                if (event.target === subtractModal) {
+                    closeSubtractModalFunc();
+                }
+                if (event.target === addModal) {
+                    closeAddModalFunc();
+                }
+            });
+
+            // Tabs
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    switchTab(tabName);
+                });
+            });
+
+            // Exportar vista actual
+            exportCurrentViewButton.addEventListener('click', function() {
+                exportToExcel('current');
+            });
+
+            // Exportar todo
+            exportAllButton.addEventListener('click', function() {
+                exportToExcel('all');
+            });
+
+            // Exportar productos por vencer
+            exportExpiringButton.addEventListener('click', function() {
+                exportToExcel('expiring');
+            });
+        }
+
+        // Cambiar entre pestañas
+        function switchTab(tabName) {
+            // Desactivar todas las pestañas
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Desactivar todos los contenidos
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Activar pestaña seleccionada
+            document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            // Actualizar contenido específico de la pestaña
+            if (tabName === 'export') {
+                updateExportPreview();
+            }
+        }
+
+        // Poblar dropdowns
+        function populateDropdowns() {
+            // Limpiar dropdowns
+            productCategoryInput.innerHTML = '<option value="">Selecciona una categoría</option>';
+            filterCategoryInput.innerHTML = '<option value="">Todas las categorías</option>';
+            productSupplierInput.innerHTML = '<option value="">Selecciona un proveedor</option>';
+            filterSupplierInput.innerHTML = '<option value="">Todos los proveedores</option>';
+            
+            // Agregar categorías
+            categories.forEach(category => {
+                const option1 = document.createElement('option');
+                option1.value = category.id;
+                option1.textContent = category.name;
+                productCategoryInput.appendChild(option1);
+                
+                const option2 = document.createElement('option');
+                option2.value = category.id;
+                option2.textContent = category.name;
+                filterCategoryInput.appendChild(option2);
+            });
+            
+            // Agregar proveedores
+            suppliers.forEach(supplier => {
+                const option1 = document.createElement('option');
+                option1.value = supplier.id;
+                option1.textContent = supplier.name;
+                productSupplierInput.appendChild(option1);
+                
+                const option2 = document.createElement('option');
+                option2.value = supplier.id;
+                option2.textContent = supplier.name;
+                filterSupplierInput.appendChild(option2);
+            });
+        }
+
+        // Agregar un nuevo producto
+        function addProduct() {
+            const name = productNameInput.value.trim();
+            const categoryId = parseInt(productCategoryInput.value);
+            const supplierId = parseInt(productSupplierInput.value);
+            const quantity = parseInt(productQuantityInput.value);
+            const expiration = productExpirationInput.value;
+
+            // Validaciones
+            if (!name) {
+                showAlert('Por favor, introduce un nombre para el producto', 'error');
+                productNameInput.focus();
+                return;
+            }
+
+            if (!categoryId) {
+                showAlert('Por favor, selecciona una categoría para el producto', 'error');
+                productCategoryInput.focus();
+                return;
+            }
+
+            if (!supplierId) {
+                showAlert('Por favor, selecciona un proveedor para el producto', 'error');
+                productSupplierInput.focus();
+                return;
+            }
+
+            if (isNaN(quantity) || quantity <= 0) {
+                showAlert('Por favor, introduce una cantidad válida', 'error');
+                productQuantityInput.focus();
+                return;
+            }
+
+            // Validar fecha de vencimiento (si se proporciona)
+            if (expiration) {
+                const expirationDate = new Date(expiration);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                if (expirationDate < today) {
+                    if (!confirm('La fecha de vencimiento es anterior a hoy. ¿Estás seguro de que quieres agregar este producto?')) {
+                        return;
+                    }
+                }
+            }
+
+            // Obtener información de categoría y proveedor
+            const category = categories.find(c => c.id === categoryId);
+            const supplier = suppliers.find(s => s.id === supplierId);
+
+            // Verificar si el producto ya existe (mismo nombre, categoría y proveedor)
+            const existingProductIndex = inventory.findIndex(item => 
+                item.name.toLowerCase() === name.toLowerCase() && 
+                item.categoryId === categoryId &&
+                item.supplierId === supplierId
+            );
+
+            if (existingProductIndex !== -1) {
+                // Actualizar cantidad si el producto ya existe
+                inventory[existingProductIndex].quantity += quantity;
+                
+                // Actualizar fecha de vencimiento si se proporciona
+                if (expiration) {
+                    inventory[existingProductIndex].expiration = expiration;
+                }
+                
+                showAlert(`Se actualizó "${name}" con ${quantity} unidades adicionales`, 'success');
+            } else {
+                // Agregar nuevo producto
+                const newProduct = {
+                    id: Date.now(), // ID único basado en timestamp
+                    name: name,
+                    categoryId: categoryId,
+                    categoryName: category ? category.name : 'Desconocida',
+                    categoryColor: category ? category.color : '#cccccc',
+                    supplierId: supplierId,
+                    supplierName: supplier ? supplier.name : 'Desconocido',
+                    quantity: quantity,
+                    expiration: expiration || null,
+                    dateAdded: new Date().toISOString()
+                };
+                
+                inventory.push(newProduct);
+                showAlert(`Producto "${name}" agregado con éxito`, 'success');
+            }
+
+            // Guardar, renderizar y limpiar formulario
+            saveInventory();
+            renderInventory();
+            updateCategoryButtons();
+            updateSupplierButtons();
+            updateCategoryStats();
+            updateExportPreview();
+            checkExpiringProducts();
+            productForm.reset();
+            productQuantityInput.value = 1;
+            productExpirationInput.value = '';
+            productNameInput.focus();
+        }
+
+        // Renderizar la tabla de inventario
+        function renderInventory() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedCategory = filterCategoryInput.value ? parseInt(filterCategoryInput.value) : null;
+            const selectedSupplier = filterSupplierInput.value ? parseInt(filterSupplierInput.value) : null;
+            const selectedExpiration = filterExpirationInput.value;
+
+            // Filtrar productos según búsqueda, categoría, proveedor y vencimiento
+            let filteredInventory = inventory.filter(item => {
+                const matchesSearch = item.name.toLowerCase().includes(searchTerm);
+                const matchesCategory = !selectedCategory || item.categoryId === selectedCategory;
+                const matchesSupplier = !selectedSupplier || item.supplierId === selectedSupplier;
+                
+                // Filtrar por vencimiento
+                let matchesExpiration = true;
+                if (selectedExpiration === 'expiring') {
+                    matchesExpiration = isProductExpiringSoon(item);
+                } else if (selectedExpiration === 'expired') {
+                    matchesExpiration = isProductExpired(item);
+                } else if (selectedExpiration === 'no-expiration') {
+                    matchesExpiration = !item.expiration;
+                }
+                
+                return matchesSearch && matchesCategory && matchesSupplier && matchesExpiration;
+            });
+
+            // Actualizar estadísticas
+            updateStats();
+
+            // Limpiar tabla
+            inventoryBody.innerHTML = '';
+
+            // Mostrar mensaje si no hay productos
+            if (filteredInventory.length === 0) {
+                inventoryBody.appendChild(emptyRow.cloneNode(true));
+                return;
+            }
+
+            // Renderizar cada producto
+            filteredInventory.forEach(product => {
+                const row = document.createElement('tr');
+                
+                // Determinar clases CSS según vencimiento
+                let rowClass = '';
+                let expirationBadgeClass = 'expiration-ok';
+                let expirationText = 'Sin vencimiento';
+                
+                if (product.expiration) {
+                    const daysUntilExpiration = getDaysUntilExpiration(product.expiration);
+                    
+                    if (daysUntilExpiration < 0) {
+                        rowClass = 'expired';
+                        expirationBadgeClass = 'expiration-danger';
+                        expirationText = `Vencido hace ${Math.abs(daysUntilExpiration)} días`;
+                    } else if (daysUntilExpiration <= 5) {
+                        rowClass = 'expiring-soon';
+                        expirationBadgeClass = 'expiration-warning';
+                        expirationText = `Vence en ${daysUntilExpiration} días`;
+                    } else {
+                        expirationText = `Vence en ${daysUntilExpiration} días`;
+                    }
+                }
+                
+                row.className = rowClass;
+                
+                row.innerHTML = `
+                    <td>
+                        <div class="product-name">${product.name}</div>
+                        <small>Agregado: ${new Date(product.dateAdded).toLocaleDateString('es-ES')}</small>
+                    </td>
+                    <td>
+                        <span class="category-badge" style="background-color: ${product.categoryColor}20; color: ${product.categoryColor}; border: 1px solid ${product.categoryColor}40;">
+                            ${product.categoryName}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="supplier-badge">
+                            ${product.supplierName}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="quantity-cell">
+                            <span class="quantity-badge">${product.quantity}</span>
+                            <div>
+                                <button class="action-btn add-btn" onclick="openAddModal(${product.id})">
+                                    <i class="fas fa-plus"></i> Añadir
+                                </button>
+                                <button class="action-btn subtract-btn" onclick="openSubtractModal(${product.id})">
+                                    <i class="fas fa-minus"></i> Descontar
+                                </button>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        ${product.expiration ? `
+                            <span class="expiration-badge ${expirationBadgeClass}">
+                                ${expirationText}<br>
+                                <small>${new Date(product.expiration).toLocaleDateString('es-ES')}</small>
+                            </span>
+                        ` : '<span class="expiration-badge expiration-ok">Sin vencimiento</span>'}
+                    </td>
+                    <td>
+                        <div class="actions">
+                            <button class="action-btn edit-btn" onclick="editProduct(${product.id})">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                            <button class="action-btn delete-btn" onclick="deleteProduct(${product.id})">
+                                <i class="fas fa-trash-alt"></i> Eliminar
+                            </button>
+                        </div>
+                    </td>
+                `;
+                inventoryBody.appendChild(row);
+            });
+        }
+
+        // Actualizar vista previa de exportación
+        function updateExportPreview() {
+            exportPreviewBody.innerHTML = '';
+            
+            // Obtener productos filtrados actuales
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedCategory = filterCategoryInput.value ? parseInt(filterCategoryInput.value) : null;
+            const selectedSupplier = filterSupplierInput.value ? parseInt(filterSupplierInput.value) : null;
+            const selectedExpiration = filterExpirationInput.value;
+
+            let filteredInventory = inventory.filter(item => {
+                const matchesSearch = item.name.toLowerCase().includes(searchTerm);
+                const matchesCategory = !selectedCategory || item.categoryId === selectedCategory;
+                const matchesSupplier = !selectedSupplier || item.supplierId === selectedSupplier;
+                
+                let matchesExpiration = true;
+                if (selectedExpiration === 'expiring') {
+                    matchesExpiration = isProductExpiringSoon(item);
+                } else if (selectedExpiration === 'expired') {
+                    matchesExpiration = isProductExpired(item);
+                } else if (selectedExpiration === 'no-expiration') {
+                    matchesExpiration = !item.expiration;
+                }
+                
+                return matchesSearch && matchesCategory && matchesSupplier && matchesExpiration;
+            });
+
+            // Limitar a 5 filas para la vista previa
+            const previewInventory = filteredInventory.slice(0, 5);
+            
+            if (previewInventory.length === 0) {
+                exportPreviewBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #7f8c8d; padding: 20px;">
+                            No hay productos para exportar
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            // Mostrar vista previa
+            previewInventory.forEach(product => {
+                const row = document.createElement('tr');
+                const expirationText = product.expiration ? 
+                    new Date(product.expiration).toLocaleDateString('es-ES') : 'Sin vencimiento';
+                
+                row.innerHTML = `
+                    <td>${product.supplierName}</td>
+                    <td>${product.name}</td>
+                    <td>${product.quantity}</td>
+                    <td>${expirationText}</td>
+                `;
+                exportPreviewBody.appendChild(row);
+            });
+
+            // Si hay más productos, mostrar indicador
+            if (filteredInventory.length > 5) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="4" style="text-align: center; color: #7f8c8d; font-style: italic;">
+                        ... y ${filteredInventory.length - 5} productos más
+                    </td>
+                `;
+                exportPreviewBody.appendChild(row);
+            }
+        }
+
+        // Actualizar estadísticas generales
+        function updateStats() {
+            const totalProducts = inventory.length;
+            const totalItems = inventory.reduce((sum, product) => sum + product.quantity, 0);
+            
+            // Calcular categorías únicas
+            const uniqueCategories = new Set(inventory.map(item => item.categoryId));
+            const totalCategories = uniqueCategories.size;
+            
+            // Calcular proveedores únicos
+            const uniqueSuppliers = new Set(inventory.map(item => item.supplierId));
+            const totalSuppliers = uniqueSuppliers.size;
+            
+            // Calcular productos por vencer
+            const expiringProducts = inventory.filter(item => isProductExpiringSoon(item)).length;
+            
+            // Actualizar contadores de productos por proveedor
+            suppliers.forEach(supplier => {
+                supplier.productCount = inventory.filter(item => item.supplierId === supplier.id).length;
+            });
+            saveSuppliers();
+            
+            // Actualizar contadores de productos por categoría
+            categories.forEach(category => {
+                category.productCount = inventory.filter(item => item.categoryId === category.id).length;
+            });
+            saveCategories();
+            
+            totalProductsElement.textContent = totalProducts;
+            totalItemsElement.textContent = totalItems;
+            totalCategoriesElement.textContent = totalCategories;
+            totalSuppliersElement.textContent = totalSuppliers;
+            expiringCountElement.textContent = expiringProducts;
+            
+            // Actualizar badge de alertas
+            if (expiringProducts > 0) {
+                expiringBadge.textContent = expiringProducts;
+                expiringBadge.style.display = 'flex';
+            } else {
+                expiringBadge.style.display = 'none';
+            }
+        }
+
+        // Actualizar botones de categorías
+        function updateCategoryButtons() {
+            categoriesButtonsContainer.innerHTML = '<span style="font-weight: 600; margin-right: 10px;">Filtrar por categoría:</span>';
+            
+            // Agregar botón para todas las categorías
+            const allButton = document.createElement('button');
+            allButton.className = `btn-category ${filterCategoryInput.value === '' ? 'active' : ''}`;
+            allButton.textContent = 'Todas';
+            allButton.onclick = () => {
+                filterCategoryInput.value = '';
+                renderInventory();
+                updateCategoryButtons();
+                updateSupplierButtons();
+                updateExportPreview();
+            };
+            categoriesButtonsContainer.appendChild(allButton);
+            
+            // Agregar botón para cada categoría
+            categories.forEach(category => {
+                const count = inventory.filter(item => item.categoryId === category.id).length;
+                if (count > 0) {
+                    const button = document.createElement('button');
+                    button.className = `btn-category ${filterCategoryInput.value == category.id ? 'active' : ''}`;
+                    button.style.borderLeft = `4px solid ${category.color}`;
+                    button.textContent = `${category.name} (${count})`;
+                    button.onclick = () => {
+                        filterCategoryInput.value = category.id;
+                        renderInventory();
+                        updateCategoryButtons();
+                        updateSupplierButtons();
+                        updateExportPreview();
+                    };
+                    categoriesButtonsContainer.appendChild(button);
+                }
+            });
+        }
+
+        // Actualizar botones de proveedores
+        function updateSupplierButtons() {
+            suppliersButtonsContainer.innerHTML = '<span style="font-weight: 600; margin-right: 10px;">Filtrar por proveedor:</span>';
+            
+            // Agregar botón para todos los proveedores
+            const allButton = document.createElement('button');
+            allButton.className = `btn-category ${filterSupplierInput.value === '' ? 'active' : ''}`;
+            allButton.textContent = 'Todos';
+            allButton.onclick = () => {
+                filterSupplierInput.value = '';
+                renderInventory();
+                updateCategoryButtons();
+                updateSupplierButtons();
+                updateExportPreview();
+            };
+            suppliersButtonsContainer.appendChild(allButton);
+            
+            // Agregar botón para cada proveedor con productos
+            suppliers.forEach(supplier => {
+                const count = inventory.filter(item => item.supplierId === supplier.id).length;
+                if (count > 0) {
+                    const button = document.createElement('button');
+                    button.className = `btn-category ${filterSupplierInput.value == supplier.id ? 'active' : ''}`;
+                    button.style.borderLeft = `4px solid #7f8c8d`;
+                    button.textContent = `${supplier.name} (${count})`;
+                    button.onclick = () => {
+                        filterSupplierInput.value = supplier.id;
+                        renderInventory();
+                        updateCategoryButtons();
+                        updateSupplierButtons();
+                        updateExportPreview();
+                    };
+                    suppliersButtonsContainer.appendChild(button);
+                }
+            });
+        }
+
+        // Actualizar estadísticas por categoría
+        function updateCategoryStats() {
+            categoryStatsContainer.innerHTML = '';
+            
+            categories.forEach(category => {
+                const productsInCategory = inventory.filter(item => item.categoryId === category.id);
+                const totalQuantity = productsInCategory.reduce((sum, product) => sum + product.quantity, 0);
+                
+                if (productsInCategory.length > 0) {
+                    const statElement = document.createElement('div');
+                    statElement.className = 'category-stat';
+                    statElement.innerHTML = `
+                        <div class="category-stat-name">${category.name}</div>
+                        <div class="category-stat-value">${totalQuantity}</div>
+                        <small>${productsInCategory.length} producto(s)</small>
+                    `;
+                    statElement.style.borderTop = `4px solid ${category.color}`;
+                    categoryStatsContainer.appendChild(statElement);
+                }
+            });
+            
+            // Si no hay categorías con productos, mostrar mensaje
+            if (categoryStatsContainer.children.length === 0) {
+                categoryStatsContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; grid-column: 1 / -1;">No hay productos por categoría aún.</p>';
+            }
+        }
+
+        // Abrir modal para descontar productos
+        function openSubtractModal(id) {
+            const productIndex = inventory.findIndex(item => item.id === id);
+            
+            if (productIndex !== -1) {
+                selectedProductForSubtraction = inventory[productIndex];
+                
+                subtractModalBody.innerHTML = `
+                    <p>Producto: <strong>${selectedProductForSubtraction.name}</strong></p>
+                    <p>Cantidad actual: <strong>${selectedProductForSubtraction.quantity}</strong></p>
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label for="subtract-quantity">Cantidad a descontar:</label>
+                        <input type="number" id="subtract-quantity" min="1" max="${selectedProductForSubtraction.quantity}" value="1">
+                    </div>
+                    <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                        <button class="btn btn-warning" id="confirm-subtract">
+                            <i class="fas fa-check"></i> Descontar
+                        </button>
+                        <button class="btn" id="cancel-subtract" style="background-color: #f0f0f0;">
+                            Cancelar
+                        </button>
+                    </div>
+                `;
+                
+                subtractModal.style.display = 'flex';
+                
+                // Configurar eventos dentro del modal
+                document.getElementById('confirm-subtract').addEventListener('click', function() {
+                    subtractProduct();
+                });
+                
+                document.getElementById('cancel-subtract').addEventListener('click', function() {
+                    closeSubtractModalFunc();
+                });
+                
+                // Permitir descontar con Enter
+                document.getElementById('subtract-quantity').addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        subtractProduct();
+                    }
+                });
+            }
+        }
+
+        // Abrir modal para añadir productos
+        function openAddModal(id) {
+            const productIndex = inventory.findIndex(item => item.id === id);
+            
+            if (productIndex !== -1) {
+                selectedProductForAddition = inventory[productIndex];
+                
+                addModalBody.innerHTML = `
+                    <p>Producto: <strong>${selectedProductForAddition.name}</strong></p>
+                    <p>Cantidad actual: <strong>${selectedProductForAddition.quantity}</strong></p>
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label for="add-quantity">Cantidad a añadir:</label>
+                        <input type="number" id="add-quantity" min="1" value="1">
+                    </div>
+                    <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                        <button class="btn btn-success" id="confirm-add">
+                            <i class="fas fa-check"></i> Añadir
+                        </button>
+                        <button class="btn" id="cancel-add" style="background-color: #f0f0f0;">
+                            Cancelar
+                        </button>
+                    </div>
+                `;
+                
+                addModal.style.display = 'flex';
+                
+                // Configurar eventos dentro del modal
+                document.getElementById('confirm-add').addEventListener('click', function() {
+                    addProductQuantity();
+                });
+                
+                document.getElementById('cancel-add').addEventListener('click', function() {
+                    closeAddModalFunc();
+                });
+                
+                // Permitir añadir con Enter
+                document.getElementById('add-quantity').addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        addProductQuantity();
+                    }
+                });
+            }
+        }
+
+        // Descontar producto (cantidad exacta)
+        function subtractProduct() {
+            if (!selectedProductForSubtraction) return;
+            
+            const subtractQuantity = parseInt(document.getElementById('subtract-quantity').value);
+            const productIndex = inventory.findIndex(item => item.id === selectedProductForSubtraction.id);
+            
+            if (productIndex !== -1) {
+                if (isNaN(subtractQuantity) || subtractQuantity <= 0) {
+                    showAlert('Por favor, introduce una cantidad válida para descontar', 'error');
+                    return;
+                }
+                
+                if (subtractQuantity > inventory[productIndex].quantity) {
+                    showAlert(`No puedes descontar más de ${inventory[productIndex].quantity} unidades`, 'error');
+                    return;
+                }
+                
+                const newQuantity = inventory[productIndex].quantity - subtractQuantity;
+                
+                if (newQuantity < 0) {
+                    showAlert('La cantidad resultante no puede ser negativa', 'error');
+                    return;
+                }
+                
+                if (newQuantity === 0) {
+                    if (confirm(`¿Estás seguro de que quieres eliminar completamente "${inventory[productIndex].name}"?`)) {
+                        inventory.splice(productIndex, 1);
+                        showAlert(`Producto "${selectedProductForSubtraction.name}" eliminado completamente`, 'success');
+                    } else {
+                        closeSubtractModalFunc();
+                        return;
+                    }
+                } else {
+                    inventory[productIndex].quantity = newQuantity;
+                    showAlert(`Se descontaron ${subtractQuantity} unidades de "${selectedProductForSubtraction.name}"`, 'success');
+                }
+                
+                saveInventory();
+                renderInventory();
+                updateCategoryButtons();
+                updateSupplierButtons();
+                updateCategoryStats();
+                updateExportPreview();
+                checkExpiringProducts();
+                closeSubtractModalFunc();
+            }
+        }
+
+        // Añadir cantidad a producto
+        function addProductQuantity() {
+            if (!selectedProductForAddition) return;
+            
+            const addQuantity = parseInt(document.getElementById('add-quantity').value);
+            const productIndex = inventory.findIndex(item => item.id === selectedProductForAddition.id);
+            
+            if (productIndex !== -1) {
+                if (isNaN(addQuantity) || addQuantity <= 0) {
+                    showAlert('Por favor, introduce una cantidad válida para añadir', 'error');
+                    return;
+                }
+                
+                inventory[productIndex].quantity += addQuantity;
+                showAlert(`Se añadieron ${addQuantity} unidades a "${selectedProductForAddition.name}"`, 'success');
+                
+                saveInventory();
+                renderInventory();
+                updateCategoryButtons();
+                updateSupplierButtons();
+                updateCategoryStats();
+                updateExportPreview();
+                checkExpiringProducts();
+                closeAddModalFunc();
+            }
+        }
+
+        // Cerrar modal de descuento
+        function closeSubtractModalFunc() {
+            subtractModal.style.display = 'none';
+            selectedProductForSubtraction = null;
+        }
+
+        // Cerrar modal de añadir
+        function closeAddModalFunc() {
+            addModal.style.display = 'none';
+            selectedProductForAddition = null;
+        }
+
+        // Editar producto
+        function editProduct(id) {
+            const productIndex = inventory.findIndex(item => item.id === id);
+            
+            if (productIndex !== -1) {
+                const product = inventory[productIndex];
+                
+                // Pedir nuevo nombre, categoría, proveedor y fecha de vencimiento
+                const newName = prompt('Editar nombre del producto:', product.name);
+                if (newName === null) return; // Usuario canceló
+                
+                // Mostrar lista de categorías para seleccionar
+                let categoryList = "Categorías disponibles:\n";
+                categories.forEach((category, index) => {
+                    categoryList += `${index + 1}. ${category.name}\n`;
+                });
+                
+                const categoryInput = prompt(`${categoryList}\nIngresa el número de la nueva categoría o deja vacío para mantener la actual (${product.categoryName}):`);
+                
+                let newCategoryId = product.categoryId;
+                let newCategoryName = product.categoryName;
+                let newCategoryColor = product.categoryColor;
+                
+                if (categoryInput !== null && categoryInput.trim() !== '') {
+                    const categoryIndex = parseInt(categoryInput) - 1;
+                    if (categoryIndex >= 0 && categoryIndex < categories.length) {
+                        newCategoryId = categories[categoryIndex].id;
+                        newCategoryName = categories[categoryIndex].name;
+                        newCategoryColor = categories[categoryIndex].color;
+                    } else {
+                        showAlert('Número de categoría no válido', 'error');
+                        return;
+                    }
+                }
+                
+                // Mostrar lista de proveedores para seleccionar
+                let supplierList = "Proveedores disponibles:\n";
+                suppliers.forEach((supplier, index) => {
+                    supplierList += `${index + 1}. ${supplier.name}\n`;
+                });
+                
+                const supplierInput = prompt(`${supplierList}\nIngresa el número del nuevo proveedor o deja vacío para mantener el actual (${product.supplierName}):`);
+                
+                let newSupplierId = product.supplierId;
+                let newSupplierName = product.supplierName;
+                
+                if (supplierInput !== null && supplierInput.trim() !== '') {
+                    const supplierIndex = parseInt(supplierInput) - 1;
+                    if (supplierIndex >= 0 && supplierIndex < suppliers.length) {
+                        newSupplierId = suppliers[supplierIndex].id;
+                        newSupplierName = suppliers[supplierIndex].name;
+                    } else {
+                        showAlert('Número de proveedor no válido', 'error');
+                        return;
+                    }
+                }
+                
+                // Pedir nueva fecha de vencimiento
+                const currentExpiration = product.expiration ? new Date(product.expiration).toISOString().split('T')[0] : '';
+                const newExpiration = prompt(`Fecha de vencimiento actual: ${currentExpiration || 'No definida'}\nIngresa nueva fecha (YYYY-MM-DD) o deja vacío para eliminar:`, currentExpiration);
+                
+                let newExpirationDate = null;
+                if (newExpiration !== null && newExpiration.trim() !== '') {
+                    // Validar formato de fecha
+                    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+                    if (!dateRegex.test(newExpiration)) {
+                        showAlert('Formato de fecha inválido. Usa YYYY-MM-DD', 'error');
+                        return;
+                    }
+                    newExpirationDate = newExpiration;
+                }
+                
+                if (newName.trim() !== '') {
+                    // Verificar que no haya duplicados (mismo nombre, categoría y proveedor)
+                    const existingProductIndex = inventory.findIndex(item => 
+                        item.name.toLowerCase() === newName.trim().toLowerCase() && 
+                        item.categoryId === newCategoryId &&
+                        item.supplierId === newSupplierId &&
+                        item.id !== id
+                    );
+                    
+                    if (existingProductIndex === -1) {
+                        inventory[productIndex].name = newName.trim();
+                        inventory[productIndex].categoryId = newCategoryId;
+                        inventory[productIndex].categoryName = newCategoryName;
+                        inventory[productIndex].categoryColor = newCategoryColor;
+                        inventory[productIndex].supplierId = newSupplierId;
+                        inventory[productIndex].supplierName = newSupplierName;
+                        inventory[productIndex].expiration = newExpirationDate;
+                        
+                        saveInventory();
+                        renderInventory();
+                        updateCategoryButtons();
+                        updateSupplierButtons();
+                        updateCategoryStats();
+                        updateExportPreview();
+                        checkExpiringProducts();
+                        showAlert('Producto actualizado correctamente', 'success');
+                    } else {
+                        showAlert('Ya existe un producto con ese nombre en la misma categoría y proveedor', 'error');
+                    }
+                }
+            }
+        }
+
+        // Eliminar producto
+        function deleteProduct(id) {
+            if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+                const productIndex = inventory.findIndex(item => item.id === id);
+                
+                if (productIndex !== -1) {
+                    const productName = inventory[productIndex].name;
+                    inventory.splice(productIndex, 1);
+                    saveInventory();
+                    renderInventory();
+                    updateCategoryButtons();
+                    updateSupplierButtons();
+                    updateCategoryStats();
+                    updateExportPreview();
+                    checkExpiringProducts();
+                    showAlert(`Producto "${productName}" eliminado`, 'success');
+                }
+            }
+        }
+
+        // Agregar nuevo proveedor
+        function addNewProvider() {
+            const name = newProviderNameInput.value.trim();
+            
+            if (!name) {
+                showAlert('Por favor, introduce un nombre para el proveedor', 'error');
+                newProviderNameInput.focus();
+                return;
+            }
+            
+            // Verificar si el proveedor ya existe
+            if (suppliers.some(supplier => supplier.name.toLowerCase() === name.toLowerCase())) {
+                showAlert('Ya existe un proveedor con ese nombre', 'error');
+                newProviderNameInput.focus();
+                return;
+            }
+            
+            // Agregar nuevo proveedor
+            const newSupplier = {
+                id: Date.now(),
+                name: name,
+                contact: '',
+                phone: '',
+                productCount: 0
+            };
+            
+            suppliers.push(newSupplier);
+            saveSuppliers();
+            populateDropdowns();
+            renderProviderList();
+            newProviderNameInput.value = '';
+            showAlert(`Proveedor "${name}" agregado con éxito`, 'success');
+        }
+
+        // Agregar nueva categoría
+        function addNewCategory() {
+            const name = newCategoryNameInput.value.trim();
+            
+            if (!name) {
+                showAlert('Por favor, introduce un nombre para la categoría', 'error');
+                newCategoryNameInput.focus();
+                return;
+            }
+            
+            // Verificar si la categoría ya existe
+            if (categories.some(category => category.name.toLowerCase() === name.toLowerCase())) {
+                showAlert('Ya existe una categoría con ese nombre', 'error');
+                newCategoryNameInput.focus();
+                return;
+            }
+            
+            // Agregar nueva categoría
+            const newCategory = {
+                id: Date.now(),
+                name: name,
+                color: selectedCategoryColor,
+                productCount: 0
+            };
+            
+            categories.push(newCategory);
+            saveCategories();
+            populateDropdowns();
+            renderCategoryList();
+            newCategoryNameInput.value = '';
+            showAlert(`Categoría "${name}" agregada con éxito`, 'success');
+        }
+
+        // Abrir modal para agregar proveedor
+        function openProviderModal() {
+            modalProviderName.value = '';
+            modalProviderContact.value = '';
+            modalProviderPhone.value = '';
+            providerModal.style.display = 'flex';
+            modalProviderName.focus();
+        }
+
+        // Guardar proveedor desde el modal
+        function saveProviderFromModal() {
+            const name = modalProviderName.value.trim();
+            const contact = modalProviderContact.value.trim();
+            const phone = modalProviderPhone.value.trim();
+            
+            if (!name) {
+                showAlert('Por favor, introduce un nombre para el proveedor', 'error');
+                modalProviderName.focus();
+                return;
+            }
+            
+            // Verificar si el proveedor ya existe
+            if (suppliers.some(supplier => supplier.name.toLowerCase() === name.toLowerCase())) {
+                showAlert('Ya existe un proveedor con ese nombre', 'error');
+                modalProviderName.focus();
+                return;
+            }
+            
+            // Agregar nuevo proveedor
+            const newSupplier = {
+                id: Date.now(),
+                name: name,
+                contact: contact,
+                phone: phone,
+                productCount: 0
+            };
+            
+            suppliers.push(newSupplier);
+            saveSuppliers();
+            populateDropdowns();
+            renderProviderList();
+            closeProviderModalFunc();
+            showAlert(`Proveedor "${name}" agregado con éxito`, 'success');
+        }
+
+        // Cerrar modal de proveedor
+        function closeProviderModalFunc() {
+            providerModal.style.display = 'none';
+        }
+
+        // Renderizar lista de proveedores
+        function renderProviderList() {
+            providerListContainer.innerHTML = '';
+            
+            if (suppliers.length === 0) {
+                providerListContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d;">No hay proveedores registrados.</p>';
+                return;
+            }
+            
+            suppliers.forEach(supplier => {
+                const providerItem = document.createElement('div');
+                providerItem.className = 'provider-item';
+                
+                const productCount = inventory.filter(item => item.supplierId === supplier.id).length;
+                
+                providerItem.innerHTML = `
+                    <div>
+                        <div class="provider-name">${supplier.name}</div>
+                        <div style="font-size: 0.9rem; color: #7f8c8d;">
+                            ${supplier.contact ? `Contacto: ${supplier.contact}` : ''}
+                            ${supplier.phone ? ` | Tel: ${supplier.phone}` : ''}
+                        </div>
+                    </div>
+                    <div>
+                        <span class="provider-products-count">${productCount} producto(s)</span>
+                        <button class="action-btn delete-btn btn-small" onclick="deleteProvider(${supplier.id})" style="margin-left: 10px;">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                `;
+                
+                providerListContainer.appendChild(providerItem);
+            });
+        }
+
+        // Renderizar lista de categorías
+        function renderCategoryList() {
+            categoryListContainer.innerHTML = '';
+            
+            if (categories.length === 0) {
+                categoryListContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d;">No hay categorías registradas.</p>';
+                return;
+            }
+            
+            categories.forEach(category => {
+                const categoryItem = document.createElement('div');
+                categoryItem.className = 'category-item';
+                
+                const productCount = inventory.filter(item => item.categoryId === category.id).length;
+                
+                categoryItem.innerHTML = `
+                    <div>
+                        <div class="category-name">
+                            <span class="color-dot" style="background-color: ${category.color}; border: 2px solid white;"></span>
+                            ${category.name}
+                        </div>
+                    </div>
+                    <div>
+                        <span class="category-products-count">${productCount} producto(s)</span>
+                        <button class="action-btn delete-btn btn-small" onclick="deleteCategory(${category.id})" style="margin-left: 10px;" ${productCount > 0 ? 'disabled' : ''}>
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                `;
+                
+                categoryListContainer.appendChild(categoryItem);
+            });
+        }
+
+        // Eliminar proveedor
+        function deleteProvider(id) {
+            // Verificar si el proveedor tiene productos asociados
+            const productCount = inventory.filter(item => item.supplierId === id).length;
+            
+            if (productCount > 0) {
+                showAlert(`No puedes eliminar este proveedor porque tiene ${productCount} producto(s) asociado(s). Primero elimina o reasigna los productos.`, 'error');
+                return;
+            }
+            
+            const supplierIndex = suppliers.findIndex(supplier => supplier.id === id);
+            
+            if (supplierIndex !== -1 && confirm('¿Estás seguro de que quieres eliminar este proveedor?')) {
+                const supplierName = suppliers[supplierIndex].name;
+                suppliers.splice(supplierIndex, 1);
+                saveSuppliers();
+                populateDropdowns();
+                renderProviderList();
+                showAlert(`Proveedor "${supplierName}" eliminado`, 'success');
+            }
+        }
+
+        // Eliminar categoría
+        function deleteCategory(id) {
+            // Verificar si la categoría tiene productos asociados
+            const productCount = inventory.filter(item => item.categoryId === id).length;
+            
+            if (productCount > 0) {
+                showAlert(`No puedes eliminar esta categoría porque tiene ${productCount} producto(s) asociado(s). Primero elimina o reasigna los productos.`, 'error');
+                return;
+            }
+            
+            const categoryIndex = categories.findIndex(category => category.id === id);
+            
+            if (categoryIndex !== -1 && confirm('¿Estás seguro de que quieres eliminar esta categoría?')) {
+                const categoryName = categories[categoryIndex].name;
+                categories.splice(categoryIndex, 1);
+                saveCategories();
+                populateDropdowns();
+                renderCategoryList();
+                showAlert(`Categoría "${categoryName}" eliminada`, 'success');
+            }
+        }
+
+        // Verificar productos por vencer
+        function checkExpiringProducts() {
+            const expiringProducts = inventory.filter(item => isProductExpiringSoon(item) || isProductExpired(item));
+            
+            // Actualizar lista en la interfaz
+            expiringProductsList.innerHTML = '';
+            
+            if (expiringProducts.length === 0) {
+                expiringProductsList.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 20px;">No hay productos por vencer en los próximos 5 días.</p>';
+                return;
+            }
+            
+            // Ordenar por fecha de vencimiento (más cercana primero)
+            expiringProducts.sort((a, b) => {
+                if (!a.expiration) return 1;
+                if (!b.expiration) return -1;
+                return new Date(a.expiration) - new Date(b.expiration);
+            });
+            
+            // Mostrar productos por vencer
+            expiringProducts.forEach(product => {
+                const daysUntilExpiration = getDaysUntilExpiration(product.expiration);
+                const isExpired = daysUntilExpiration < 0;
+                
+                const productElement = document.createElement('div');
+                productElement.className = `expiring-product ${isExpired ? 'expired' : ''}`;
+                
+                productElement.innerHTML = `
+                    <div>
+                        <div class="expiring-product-name">${product.name}</div>
+                        <div class="expiring-product-details">
+                            ${product.categoryName} | ${product.supplierName} | Cantidad: ${product.quantity}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="expiring-product-date ${isExpired ? 'expired' : ''}">
+                            ${isExpired ? 
+                                `Vencido hace ${Math.abs(daysUntilExpiration)} días` : 
+                                `Vence en ${daysUntilExpiration} días`}
+                        </div>
+                        <div style="font-size: 0.9rem; color: #7f8c8d; text-align: right; margin-top: 5px;">
+                            ${new Date(product.expiration).toLocaleDateString('es-ES')}
+                        </div>
+                    </div>
+                `;
+                
+                expiringProductsList.appendChild(productElement);
+            });
+            
+            // Mostrar alertas si hay productos por vencer
+            showExpiringAlerts(expiringProducts);
+        }
+
+        // Mostrar alertas de productos por vencer
+        function showExpiringAlerts(expiringProducts) {
+            expiringAlertsContainer.innerHTML = '';
+            
+            const expiredProducts = expiringProducts.filter(p => getDaysUntilExpiration(p.expiration) < 0);
+            const soonExpiringProducts = expiringProducts.filter(p => getDaysUntilExpiration(p.expiration) >= 0 && getDaysUntilExpiration(p.expiration) <= 5);
+            
+            if (expiredProducts.length > 0) {
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-danger show';
+                alert.innerHTML = `
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span><strong>¡Atención!</strong> Tienes ${expiredProducts.length} producto(s) vencido(s).</span>
+                `;
+                expiringAlertsContainer.appendChild(alert);
+                expiringAlertsContainer.style.display = 'block';
+            } else if (soonExpiringProducts.length > 0) {
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-warning show';
+                alert.innerHTML = `
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span><strong>¡Atención!</strong> Tienes ${soonExpiringProducts.length} producto(s) por vencer en los próximos 5 días.</span>
+                `;
+                expiringAlertsContainer.appendChild(alert);
+                expiringAlertsContainer.style.display = 'block';
+            } else {
+                expiringAlertsContainer.style.display = 'none';
+            }
+        }
+
+        // Iniciar verificador de vencimientos
+        function startExpirationChecker() {
+            // Verificar cada hora
+            expirationCheckInterval = setInterval(() => {
+                checkExpiringProducts();
+            }, 3600000); // 1 hora en milisegundos
+        }
+
+        // Obtener días hasta el vencimiento
+        function getDaysUntilExpiration(expirationDate) {
+            if (!expirationDate) return Infinity;
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const expiration = new Date(expirationDate);
+            expiration.setHours(0, 0, 0, 0);
+            
+            const diffTime = expiration - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            return diffDays;
+        }
+
+        // Verificar si un producto está por vencer (≤ 5 días)
+        function isProductExpiringSoon(product) {
+            if (!product.expiration) return false;
+            
+            const daysUntilExpiration = getDaysUntilExpiration(product.expiration);
+            return daysUntilExpiration >= 0 && daysUntilExpiration <= 5;
+        }
+
+        // Verificar si un producto está vencido
+        function isProductExpired(product) {
+            if (!product.expiration) return false;
+            
+            const daysUntilExpiration = getDaysUntilExpiration(product.expiration);
+            return daysUntilExpiration < 0;
+        }
+
+        // Exportar a Excel
+        function exportToExcel(type) {
+            let dataToExport = [];
+            
+            // Determinar qué datos exportar según el tipo
+            if (type === 'all') {
+                dataToExport = [...inventory];
+            } else if (type === 'current') {
+                // Obtener productos filtrados actuales
+                const searchTerm = searchInput.value.toLowerCase();
+                const selectedCategory = filterCategoryInput.value ? parseInt(filterCategoryInput.value) : null;
+                const selectedSupplier = filterSupplierInput.value ? parseInt(filterSupplierInput.value) : null;
+                const selectedExpiration = filterExpirationInput.value;
+
+                dataToExport = inventory.filter(item => {
+                    const matchesSearch = item.name.toLowerCase().includes(searchTerm);
+                    const matchesCategory = !selectedCategory || item.categoryId === selectedCategory;
+                    const matchesSupplier = !selectedSupplier || item.supplierId === selectedSupplier;
+                    
+                    let matchesExpiration = true;
+                    if (selectedExpiration === 'expiring') {
+                        matchesExpiration = isProductExpiringSoon(item);
+                    } else if (selectedExpiration === 'expired') {
+                        matchesExpiration = isProductExpired(item);
+                    } else if (selectedExpiration === 'no-expiration') {
+                        matchesExpiration = !item.expiration;
+                    }
+                    
+                    return matchesSearch && matchesCategory && matchesSupplier && matchesExpiration;
+                });
+            } else if (type === 'expiring') {
+                dataToExport = inventory.filter(item => isProductExpiringSoon(item) || isProductExpired(item));
+            }
+            
+            if (dataToExport.length === 0) {
+                showAlert('No hay datos para exportar', 'error');
+                return;
+            }
+            
+            // Crear datos en el formato solicitado
+            const excelData = [
+                // Primera fila vacía (como en el formato solicitado)
+                ['', '', '', ''],
+                // Segunda fila vacía (como en el formato solicitado)
+                ['', '', '', ''],
+                // Encabezados
+                ['Proveedor', 'Producto', 'Cantidad', 'Vencimiento'],
+                // Datos
+                ...dataToExport.map(item => [
+                    item.supplierName, 
+                    item.name, 
+                    item.quantity,
+                    item.expiration ? new Date(item.expiration).toLocaleDateString('es-ES') : 'Sin vencimiento'
+                ])
+            ];
+            
+            // Crear libro de trabajo
+            const wb = XLSX.utils.book_new();
+            
+            // Crear hoja de trabajo
+            const ws = XLSX.utils.aoa_to_sheet(excelData);
+            
+            // Ajustar el ancho de las columnas
+            const colWidths = [
+                { wch: 30 }, // Proveedor
+                { wch: 40 }, // Producto
+                { wch: 15 }, // Cantidad
+                { wch: 20 }  // Vencimiento
+            ];
+            ws['!cols'] = colWidths;
+            
+            // Estilo para los encabezados
+            const headerRange = XLSX.utils.decode_range(ws['!ref']);
+            for (let C = headerRange.s.c; C <= headerRange.e.c; ++C) {
+                const headerCell = XLSX.utils.encode_cell({ r: 2, c: C }); // Fila 3 (índice 2)
+                if (ws[headerCell]) {
+                    ws[headerCell].s = {
+                        font: { bold: true, color: { rgb: "FFFFFF" } },
+                        fill: { fgColor: { rgb: "2C3E50" } },
+                        alignment: { horizontal: "center" }
+                    };
+                }
+            }
+            
+            // Agregar hoja al libro
+            XLSX.utils.book_append_sheet(wb, ws, "Inventario");
+            
+            // Generar nombre de archivo con fecha
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            const fileName = `INVENTARIO_${dateStr}.xlsx`;
+            
+            // Exportar archivo
+            XLSX.writeFile(wb, fileName);
+            
+            showAlert(`Archivo ${fileName} exportado con éxito con ${dataToExport.length} productos`, 'success');
+        }
+
+        // Mostrar alerta
+        function showAlert(message, type) {
+            // Crear elemento de alerta
+            const alertElement = document.createElement('div');
+            alertElement.className = `alert alert-${type}`;
+            alertElement.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            // Agregar al contenedor
+            alertContainer.appendChild(alertElement);
+            
+            // Mostrar con animación
+            setTimeout(() => {
+                alertElement.classList.add('show');
+            }, 10);
+            
+            // Ocultar y eliminar después de 4 segundos
+            setTimeout(() => {
+                alertElement.classList.remove('show');
+                setTimeout(() => {
+                    if (alertContainer.contains(alertElement)) {
+                        alertContainer.removeChild(alertElement);
+                    }
+                }, 500);
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
